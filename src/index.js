@@ -6,6 +6,7 @@ import * as serviceWorker from './serviceWorker';
 // import Case from './component/Case'
 // import Children from './component/Children'
 import Router from "./router/index"
+import 'antd/dist/antd.css';
 ReactDOM.render(
   <Router></Router>,
   document.getElementById('root')

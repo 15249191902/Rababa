@@ -1,4 +1,4 @@
-import Home from "../pages/home/Home";
+import Home from "../pages/home/Home.js";
 import Message from "../pages/Message.js"
 import Detail from "../pages/Detail.js"
 export const mainRouter = [
