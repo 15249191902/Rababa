@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { useHistory } from 'react-router-dom'
 import {
-  getUserByPage,
-  deleteUserByIdApi
+  // getUserByPage,
+  // deleteUserByIdApi,
+  addUser,
+  getSingerList,
+  deleteSinger
   // getUserData1,
 } from "api/userApi/user.js"
 import { 
@@ -15,6 +18,7 @@ import {
   Modal,
   Input,
   Radio,
+  Spin,
 } from 'antd'
 import homeCss from "./Home.module.scss"
 import { UploadOutlined } from '@ant-design/icons'
@@ -24,6 +28,9 @@ const Home = () => {
     const [dataSource, setDateSource] = useState([])
     const [addModal, setAddModal] = useState(false)
     const [sex, setSex] = useState(0)
+    const [singerName, setSingerName]  = useState("不知名");
+    const [remark, setRemark] = useState("这个人很懒，所以什么也没写！")
+    const [spinning, setSpinning] = useState(false)
     const props = {
       name: 'file',
       action: '/upload/fileUpload',
@@ -44,21 +51,34 @@ const Home = () => {
     // 表头
     const columns = [
       {
-        title: '项目名称',
-        dataIndex: 'name',
-        key: 'name',
+        title: '歌手名称',
+        dataIndex: 'singer_name',
+        align: 'center',
       },
       {
-        title: '数量',
-        dataIndex: 'age',
-        key: 'age',
+        title: '性别',
+        dataIndex: 'sex',
+        align: 'center',
+        render: function (item, record) {
+          let sex = "女"
+          if (item === 0) {
+            sex = "男"
+          }
+          return sex
+        }
+      },
+      {
+        title: '备注',
+        dataIndex: 'remark',
+        align: 'center',
       },
       {
         title: '操作',
-        key: "operate",
+        dataIndex: 'operate',
+        align: 'center',
         render : function (item, record) {
           return (
-            <Button type="primary" onClick={(e) => deleteBtn(record.key, e)}>删除</Button>
+            <Button type="primary" onClick={(e) => deleteBtn(record, e)}>删除</Button>
           )
         }
       }
@@ -76,12 +96,16 @@ const Home = () => {
       history.push("/Detail");
     }
     // 删除一条
-    function deleteBtn (id, e){
-      deleteUserByIdApi({id: id}).then(res => {
+    function deleteBtn (record, e){
+      setSpinning(true);
+      deleteSinger({seqId: record.seq_id}).then(res => {
+        setSpinning(false);
         let rData = res.data;
         if (rData.status === 0) {
           initData();
         }
+      }).catch(res => {
+        setSpinning(false);
       })
     }
     function aa(event) {
@@ -94,26 +118,39 @@ const Home = () => {
       reader.readAsText(file);
     }
     function initData () {
-      getUserByPage({pageNo:1, pageSize:10}).then(res => {
+      setSpinning(true);
+      getSingerList({pageNo:1, pageSize:10}).then(res => {
+        setSpinning(false);
         let rData = res.data
         if (rData.status === 0) {
-          let arr = rData.data.user.map(item => {
-            return {
-              key: item.id,
-              name: item.name,
-              age: item.age
-            }
+          let arr = rData.data.list.map(item => {
+            item.key =  item.seq_id
+            return item;
           });
           setDateSource(arr);
         }
+      }).catch(res => {
+        setSpinning(false);
       })
     }
     function saveMethod () {
       // 保存数据
-      let data =  {
-         
+      let user =  {
+        singerName: singerName, 
+        sex: sex,
+        remark: remark
       }
-      closedModal();
+      // 插入操作
+      setSpinning(true);
+      addUser({user}).then(res => {
+        setSpinning(false);
+        if (res.data.status === 0) {
+          closedModal();
+          initData();
+        }
+      }).catch(res => {
+        setSpinning(false);
+      })
     }
     function cancelMethod () {
       closedModal();
@@ -121,6 +158,14 @@ const Home = () => {
     function sexChange (e) {
       const val = e.target.value;
       setSex(val)
+    }
+    function singerNameChange (e) {
+      const val = e.target.value;
+      setSingerName(val)
+    }
+    function remarkChange (e) {
+      const val = e.target.value;
+      setRemark(val)
     }
     useEffect(() => {
       // 初始化数据
@@ -140,6 +185,7 @@ const Home = () => {
       // })
     },[])
     return (
+      <Spin spinning={spinning}>
         <div className={homeCss.contain}>
           <div className={homeCss.content}>
             <Button type="primary" onClick={addBtn}>新增</Button>
@@ -184,7 +230,7 @@ const Home = () => {
           >
             <Row gutter={[16, 16]}>
               <Col span={24}>
-                <Input placeholder="singer name"></Input>
+                <Input placeholder="singer name" value={singerName} onChange={singerNameChange}></Input>
               </Col>
               <Col span={24}>
                 <Radio.Group onChange={sexChange} value={sex}>
@@ -193,11 +239,12 @@ const Home = () => {
                 </Radio.Group>
               </Col>
               <Col span={24}>
-                <TextArea rows={4} placeholder="remark"/>
+                <TextArea rows={4} placeholder="remark" value={remark} onChange={remarkChange}/>
               </Col>
             </Row>
           </Modal>
         </div>
+      </Spin>
     )
 }
 export default Home

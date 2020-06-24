@@ -11,3 +11,6 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+.ant-spin-nested-loading > div > .ant-spin {
+  max-height: 100%;
+}
